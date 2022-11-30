@@ -1,0 +1,91 @@
+version: "3.9"
+services:
+  mariaDB104:
+    container_name: mariaDB104
+    image: mariadb:10.4
+    ports:
+      - "3307:3306"
+    environment:
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_ROOT_PASSWORD: sasa
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin
+      MARIADB_DATABASE: msvc_usuarios
+    volumes:
+      - data-mysql:/var/lib/mysql
+    restart: always
+    networks:
+      - spring
+
+  postgres14:
+    container_name: postgres14
+    image: postgres:14-alpine
+    ports:
+      - "5532:5432"
+    environment:
+      - POSTGRES_USER=administrator
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=msvc_cursos
+    volumes:
+      - data-postgres:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - spring
+
+  msvc-usuarios:
+    container_name: msvc-usuarios
+    image: carnol1989/usuarios
+#    build:
+#      context: ./
+#      dockerfile: ./msvc-usuarios/Dockerfile
+    #image: usuarios:latest
+    ports:
+      - "8001:8001"
+    #env_file: ./msvc-usuarios/.env
+    environment:
+      PORT: 8001
+      DB_HOST: mariaDB104:3306
+      DB_DATABASE: msvc_usuarios
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      CURSOS_URL: msvc-cursos:8002
+    networks:
+      - spring
+    depends_on:
+      - mariaDB104
+    restart: always
+
+  msvc-cursos:
+    container_name: msvc-cursos
+    image: carnol1989/cursos:latest
+#    build:
+#      context: ./
+#      dockerfile: ./msvc-cursos/Dockerfile
+    #image: cursos:latest
+    ports:
+      - "8002:8002"
+    #env_file:
+      #- ./msvc-cursos/.env
+    environment:
+      PORT: 8002
+      DB_HOST: postgres14:5432
+      DB_DATABASE: msvc_cursos
+      DB_USERNAME: administrator
+      DB_PASSWORD: admin
+      USUARIOS_URL: msvc-usuarios:8001
+    networks:
+      - spring
+    depends_on:
+      - postgres14
+      - msvc-usuarios
+    restart: always
+
+volumes:
+  data-mysql:
+    name: data-mysql
+  data-postgres:
+    name: data-postgres
+
+networks:
+  spring:
+    name: spring

@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  mariaDB104:
+    container_name: mariaDB104
+    image: mariadb:10.4
+    ports:
+      - "3307:3306"
+    environment:
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_ROOT_PASSWORD: sasa
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin
+      MARIADB_DATABASE: msvc_usuarios
+    volumes:
+      - data-mysql:/var/lib/mysql
+    restart: always
+    networks:
+      - spring
+  msvc-usuarios:
+    container_name: msvc-usuarios
+    image: carnol1989/usuarios
+#    build:
+#      context: ./
+#      dockerfile: ./msvc-usuarios/Dockerfile
+    #image: usuarios:latest
+    ports:
+      - "8001:8001"
+    #env_file: ./msvc-usuarios/.env
+    environment:
+      PORT: 8001
+      DB_HOST: mariaDB104:3306
+      DB_DATABASE: msvc_usuarios
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      CURSOS_URL: ec2-34-224-223-140.compute-1.amazonaws.com:8002
+    networks:
+      - spring
+    depends_on:
+      - mariaDB104
+    restart: always
+
+volumes:
+  data-mysql:
+    name: data-mysql
+
+networks:
+  spring:
+    name: spring
